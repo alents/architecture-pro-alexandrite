@@ -1,0 +1,9 @@
+Flask
+requests
+opentelemetry-api  #api otel
+opentelemetry-sdk #sdk otel
+opentelemetry-instrumentation-flask #framework instrumentation
+opentelemetry-instrumentation-requests #framework instrumentation
+opentelemetry-exporter-jaeger
+deprecated
+opentelemetry-exporter-otlp-proto-grpc
