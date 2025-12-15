@@ -1,0 +1,49 @@
+@startuml
+actor Operator
+participant "MES" as UI
+participant "MES API" as API
+participant "Cache\n(Redis)" as Cache
+participant "MES DB" as DB
+
+== Чтение дашборда заказов ==
+
+Operator -> UI: Открыть дашборд\n«Заказы в работе»
+UI -> API: GET /dashboard/orders/in-progress
+
+note right of API
+Фиксированное представление дашборда:
+- последние 10 заказов
+- статус IN_PROGRESS
+- сортировка по дате
+end note
+
+API -> Cache: get(key=dashboard:orders:last_10_in_progress)
+alt Cache hit
+    Cache --> API: Read-model списка заказов
+else Cache miss
+    API -> DB: SELECT last 10 orders\nWHERE status = IN_PROGRESS
+    DB --> API: Результат запроса
+    API -> Cache: set(key=dashboard:orders:last_10_in_progress, data, TTL)
+end
+
+API --> UI: Список заказов
+UI --> Operator: Отображение дашборда
+
+== Изменение статуса заказа ==
+
+Operator -> UI: Изменить статус заказа
+UI -> API: POST /orders/{orderId}/status
+
+API -> DB: UPDATE orders SET status = NEW_STATUS
+DB --> API: OK
+
+API -> Cache: invalidate(key=order_card:{orderId})
+note right
+кэш списков заказов
+инвалидируется по TTL
+end note
+
+API --> UI: OK
+UI --> Operator: Статус обновлён
+
+@enduml
